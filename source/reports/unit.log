@@ -1,0 +1,18 @@
+
+> xiaoyoumingqi@0.1.0 test
+> vitest run
+
+
+ RUN  v2.1.8 /agent/repos/tmp-b3852b531e42a0db
+
+ ✓ tests/b.test.ts (6 tests) 6ms
+ ✓ tests/e.test.ts (5 tests) 7ms
+ ✓ tests/a.test.ts (9 tests) 8ms
+ ✓ tests/d.test.ts (5 tests) 5ms
+ ✓ tests/c.test.ts (5 tests) 6ms
+
+ Test Files  5 passed (5)
+      Tests  30 passed (30)
+   Start at  11:03:37
+   Duration  428ms (transform 222ms, setup 0ms, collect 343ms, tests 31ms, environment 1ms, prepare 210ms)
+
