@@ -1,8 +1,0 @@
-node_modules
-dist
-test-results
-playwright-report
-reports/playwright-report.json
-.DS_Store
-*.log
-!reports/*.log
