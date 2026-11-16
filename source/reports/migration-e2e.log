@@ -1,0 +1,15 @@
+> xiaoyoumingqi@0.1.0 test:e2e
+> playwright test
+
+Running 8 tests using 1 worker
+  ✓  1 suite.spec.ts:11:1 › 首页 (292ms)
+  ✓  2 suite.spec.ts:16:1 › A 十篇、技能、工具与不同摆法 (4.5s)
+  ✓  3 suite.spec.ts:107:1 › B 重叠、三条边与旋转 (669ms)
+  ✓  4 suite.spec.ts:129:1 › C 基线、进度 70 与同一公式预飞 (413ms)
+  ✓  5 suite.spec.ts:146:1 › D 校准次数与确认值 (415ms)
+  ✓  6 suite.spec.ts:168:1 › E 天数不自动走，十篇可跨过第三天 (2.3s)
+  ✓  7 suite.spec.ts:200:1 › 窄屏 (298ms)
+  ✓  8 touch.spec.ts:56:1 › 触屏点选可完成五种试验 (2.4s)
+
+  8 passed (12.1s)
+E2E:0

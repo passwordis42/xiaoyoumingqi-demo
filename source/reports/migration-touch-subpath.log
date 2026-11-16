@@ -1,0 +1,12 @@
+Static host: http://127.0.0.1:43124/xiaoyoumingqi-web/
+Artifact files: index.html, assets/index-*.js, assets/index-*.css, favicon.svg
+rule-config.json on that host: HTTP 404
+sourcemap files: 0
+PUBLIC_BASE_URL=http://127.0.0.1:43124/xiaoyoumingqi-web/ npx playwright test -c playwright.public.config.ts
+
+  ✓  1 touch.spec.ts:56:1 › 触屏点选可完成五种试验 (2.4s)
+  1 passed (2.9s)
+
+Viewport 390x844, navigator.maxTouchPoints > 0.
+A/B tap-to-place, five modes publish and restart, density touch-drag left calibrations at 3, in-memory rule download, no request URL containing rule-config.
+TOUCH_SUBPATH:0
