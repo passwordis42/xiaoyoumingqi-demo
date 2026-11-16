@@ -34,8 +34,33 @@ async function assertNoHorizontalClip(page: import("@playwright/test").Page, lab
   }
 }
 
+async function touchDrag(page: import("@playwright/test").Page, from: { x: number; y: number }, to: { x: number; y: number }) {
+  const client = await page.context().newCDPSession(page);
+  const steps = 8;
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: Math.round(from.x), y: Math.round(from.y), id: 1 }],
+  });
+  for (let i = 1; i <= steps; i++) {
+    const x = from.x + ((to.x - from.x) * i) / steps;
+    const y = from.y + ((to.y - from.y) * i) / steps;
+    await client.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: Math.round(x), y: Math.round(y), id: 1 }],
+    });
+  }
+  await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await client.detach();
+}
+
 test("触屏点选可完成五种试验", async ({ page }) => {
-  await page.goto("/#/a");
+  const ruleRequests: string[] = [];
+  page.on("request", (req) => {
+    if (req.url().includes("rule-config")) ruleRequests.push(req.url());
+  });
+  expect(page.viewportSize()).toEqual({ width: 390, height: 844 });
+  expect(await page.evaluate(() => navigator.maxTouchPoints)).toBeGreaterThan(0);
+  await page.goto("#/a");
   await assertNoHorizontalClip(page, ["抓牌", "提交", "下一天", "按此重开"]);
   await page.getByTestId("draw").tap();
   await expect(page.getByTestId("hand-count")).toHaveText("6");
@@ -54,7 +79,7 @@ test("触屏点选可完成五种试验", async ({ page }) => {
   await page.getByTestId("restart").tap();
   await expect(page.getByTestId("history").locator("li")).toHaveCount(0);
 
-  await page.goto("/#/b");
+  await page.goto("#/b");
   await assertNoHorizontalClip(page, ["旋转", "收回", "记下并下一轮"]);
   await page.getByTestId("tray-analysis-a").tap();
   await page.getByTestId("cell-0-0").tap();
@@ -64,29 +89,47 @@ test("触屏点选可完成五种试验", async ({ page }) => {
   await page.getByTestId("remove").tap();
   await expect(page.getByTestId("tray-analysis-a")).toBeVisible();
   await expect(page.getByTestId("cell-0-0")).not.toContainText("分");
+  await page.getByTestId("tray-analysis-a").tap();
+  await page.getByTestId("cell-0-0").tap();
+  await expect(page.getByTestId("cell-0-0")).toContainText("分");
+  await page.getByTestId("next-round").tap();
+  await expect(page.getByTestId("history").locator("li")).toHaveCount(1);
+  await page.getByTestId("restart").tap();
+  await expect(page.getByTestId("history").locator("li")).toHaveCount(0);
 
-  await page.goto("/#/c");
+  await page.goto("#/c");
   await assertNoHorizontalClip(page, ["事实", "落版"]);
   await page.getByTestId("beat-fact").tap();
   await page.getByTestId("pos-20").tap();
   await expect(page.getByTestId("pos-20")).toContainText("事实");
   await page.getByTestId("settle").tap();
   await expect(page.getByTestId("history").locator("li")).toHaveCount(1);
+  await page.getByTestId("restart").tap();
+  await expect(page.getByTestId("history").locator("li")).toHaveCount(0);
 
-  await page.goto("/#/d");
+  await page.goto("#/d");
   await assertNoHorizontalClip(page, ["分析", "按上次校准出版"]);
   const fader = page.getByTestId("fader-density");
+  await fader.scrollIntoViewIfNeeded();
   const box = await fader.boundingBox();
   expect(box).not.toBeNull();
-  await page.touchscreen.tap(box!.x + box!.width * 0.8, box!.y + box!.height / 2);
+  await expect(page.getByTestId("cal-left")).toHaveText("3");
+  await touchDrag(
+    page,
+    { x: box!.x + box!.width * 0.5, y: box!.y + box!.height / 2 },
+    { x: box!.x + box!.width * 0.86, y: box!.y + box!.height / 2 },
+  );
   await expect(page.getByTestId("draft-density")).not.toHaveText("50");
   await expect(page.getByTestId("cal-left")).toHaveText("3");
   await page.getByTestId("analyze").tap();
   await expect(page.getByTestId("cal-left")).toHaveText("2");
   await page.getByTestId("publish").tap();
   await expect(page.getByTestId("history-0")).toBeVisible();
+  await page.getByTestId("restart").tap();
+  await expect(page.getByTestId("history").locator("li")).toHaveCount(0);
+  await expect(page.getByTestId("cal-left")).toHaveText("3");
 
-  await page.goto("/#/e");
+  await page.goto("#/e");
   await assertNoHorizontalClip(page, ["下一天", "吐槽"]);
   await page.getByTestId("stance-roast").tap();
   await expect(page.getByTestId("stance-roast")).toHaveAttribute("aria-pressed", "true");
@@ -96,4 +139,14 @@ test("触屏点选可完成五种试验", async ({ page }) => {
   await page.getByTestId("advance-day").tap();
   await expect(page.getByTestId("day")).toHaveText("2");
   await page.screenshot({ path: "reports/screenshots/touch-e.png", fullPage: true });
+  await page.getByTestId("restart").tap();
+  await expect(page.getByTestId("day")).toHaveText("1");
+  await expect(page.getByTestId("history").locator("li")).toHaveCount(0);
+
+  await page.goto("#/");
+  const download = page.waitForEvent("download");
+  await page.getByTestId("export-rules").tap();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("rule-config.json");
+  expect(ruleRequests, "page must not request a standalone rule file").toEqual([]);
 });

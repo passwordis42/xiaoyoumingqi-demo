@@ -5,3 +5,4 @@ playwright-report
 reports/playwright-report.json
 .DS_Store
 *.log
+!reports/*.log
